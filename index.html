@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 關鍵設定：強制滿版、禁止縮放、確保在LINE中正常顯示 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>應用程式主頁面</title>
+    <style>
+        /* 極簡CSS重置，確保所有元素從邊緣開始 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 設定全域基礎字體為較大的16px (符合長輩需求) */
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%; /* 防止旋轉螢幕時字體自動變化 */
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background-color: #f5f5f5; /* 背景色，避免載入時空白 */
+            overflow: hidden; /* 隱藏body滾動條，讓iframe自己控制 */
+            height: 100dvh; /* 使用dvh確保動態視口高度 (處理手機網址列伸縮) */
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 主要內容區塊：滿版iframe */
+        .embedded-page {
+            flex: 1; /* 撐滿剩餘高度 */
+            width: 100%;
+            border: none; /* 移除邊框 */
+            overflow: auto; /* 如果嵌入的內容過長，讓iframe內部可以滾動 */
+            -webkit-overflow-scrolling: touch; /* 流暢的觸控滾動 */
+        }
+
+        /* 可選：防止使用者選取任何內容 (資安輔助) */
+        .no-select {
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+/Edge */
+            user-select: none; /* Standard */
+        }
+
+        /* 簡單的載入提示 (可選) */
+        .loading-placeholder {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: #666;
+            z-index: 1;
+            pointer-events: none; /* 讓提示不阻擋點擊 */
+        }
+    </style>
+</head>
+<body class="no-select" oncontextmenu="return false;" onselectstart="return false;" ondragstart="return false;">
+    <!-- 載入提示 (在iframe載入完成前顯示) -->
+    <div class="loading-placeholder" id="loading">載入中，請稍候...</div>
+
+    <!-- 嵌入目標網址的iframe -->
+    <iframe 
+        class="embedded-page" 
+        id="mainFrame"
+        src="https://script.google.com/macros/s/AKfycbzQr0716QGAu68fTyqaNhPwFvK91sCKUUEj_agX4yJ4EsZa6XDYISTgszwa6T3-3fdX/exec"
+        frameborder="0"
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        loading="lazy"
+        onload="document.getElementById('loading').style.display='none';">
+        <!-- 當瀏覽器不支援iframe時的備用文字 -->
+        <p>您的瀏覽器不支援 iframe，請點擊此連結：<a href="https://script.google.com/macros/s/AKfycbzQr0716QGAu68fTyqaNhPwFvK91sCKUUEj_agX4yJ4EsZa6XDYISTgszwa6T3-3fdX/exec" target="_blank">開啟應用程式</a></p>
+    </iframe>
+
+    <script>
+        // 加強防護：防止使用者透過快捷鍵(F12)或組合鍵開啟開發者工具 (僅為輔助，無法100%防止)
+        document.addEventListener('keydown', function(e) {
+            // 封鎖 F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) || 
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // 當iframe載入失敗時顯示提示 (例如被封鎖)
+        document.getElementById('mainFrame').onerror = function() {
+            document.getElementById('loading').innerHTML = '載入失敗，請確認網路連線或連結是否有效。';
+        };
+    </script>
+</body>
+</html>
