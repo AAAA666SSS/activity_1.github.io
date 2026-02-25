@@ -11,29 +11,27 @@
             box-sizing: border-box;
         }
 
-        /* 高度強制填滿整個視窗 */
         html, body {
             width: 100%;
             height: 100%;
             background-color: #f0f2f5;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            font-size: 18px;  /* 基礎字體放大 */
+            font-size: 18px;
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* 允許 iframe 內部可以選取文字 */
         iframe {
             user-select: text;
             -webkit-user-select: text;
         }
 
-        /* 使用 Grid 強迫中間區域填滿 */
         .full-screen-container {
             display: grid;
-            grid-template-rows: auto 1fr auto;  /* 頭部 + 中間填滿 + 底部 */
+            grid-template-rows: auto 1fr auto;
             width: 100%;
-            height: 100%;  /* 繼承 body 高度 */
+            height: 100%;
+            position: relative;  /* 讓載入動畫可以絕對定位 */
             background-color: inherit;
         }
 
@@ -46,18 +44,21 @@
             font-weight: 500;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             user-select: none;
+            z-index: 2;
         }
 
         .iframe-wrapper {
             width: 100%;
             background-color: #ffffff;
-            overflow: hidden;  /* 避免 wrapper 出現捲軸 */
+            overflow: hidden;
+            position: relative;  /* 載入動畫相對於此區塊定位 */
+            z-index: 1;
         }
 
         iframe {
             display: block;
             width: 100%;
-            height: 100%;      /* 完全填滿 wrapper */
+            height: 100%;
             border: none;
             overflow: auto;
             background-color: transparent;
@@ -71,6 +72,53 @@
             color: #7f8c8d;
             border-top: 1px solid #bdc3c7;
             user-select: none;
+            z-index: 2;
+        }
+
+        /* ---------- 載入動畫層 ---------- */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+            pointer-events: none;  /* 讓點擊可以穿透到 iframe（當隱藏時） */
+        }
+
+        /* 旋轉圓環 */
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #e0e0e0;
+            border-top: 6px solid #2c3e50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        /* 隱藏動畫層（當 iframe 載入完成後由 JavaScript 加上此類別） */
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
         }
     </style>
 </head>
@@ -79,7 +127,7 @@
         (function() {
             // 防止右鍵選單
             document.addEventListener('contextmenu', e => e.preventDefault());
-            // 防止複製快捷鍵 (Ctrl+C, Ctrl+S, Ctrl+U 等)
+            // 防止複製快捷鍵
             document.addEventListener('keydown', e => {
                 if ((e.ctrlKey || e.metaKey) && ['c', 'C', 's', 'S', 'u', 'U'].includes(e.key)) {
                     e.preventDefault();
@@ -87,6 +135,26 @@
             });
             // 防止雙擊選取
             document.addEventListener('dblclick', e => e.preventDefault());
+
+            // 當 iframe 載入完成時隱藏載入動畫
+            window.addEventListener('load', function() {
+                const iframe = document.querySelector('iframe');
+                const overlay = document.querySelector('.loading-overlay');
+                if (iframe && overlay) {
+                    // 如果 iframe 已經載入（有時候 load 事件會比 iframe 本身快）
+                    if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+                        overlay.classList.add('hidden');
+                    } else {
+                        iframe.addEventListener('load', function() {
+                            overlay.classList.add('hidden');
+                        });
+                        // 設定 5 秒後強制隱藏（避免萬一載入失敗卡住畫面）
+                        setTimeout(() => {
+                            overlay.classList.add('hidden');
+                        }, 5000);
+                    }
+                }
+            });
         })();
     </script>
 
@@ -96,6 +164,12 @@
         </div>
 
         <div class="iframe-wrapper">
+            <!-- 載入動畫層 -->
+            <div class="loading-overlay">
+                <div class="spinner"></div>
+                <div class="loading-text">載入中，請稍後...</div>
+            </div>
+
             <iframe 
                 src="https://script.google.com/macros/s/AKfycbwUXF4XxR4ZZenwgx2zK1z504qMIuSc7MJRdQU9bY_0YILmt7_taOQs0D0I_mfHWFzR/exec"
                 title="Google Apps 應用程式"
