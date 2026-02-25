@@ -2,97 +2,137 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- 關鍵設定：強制滿版、禁止縮放、確保在LINE中正常顯示 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>應用程式主頁面</title>
+    <!-- 確保在任何裝置（包括 LINE）上都以滿版且不縮放的方式顯示 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+    <title>主要服務頁面</title>
     <style>
-        /* 極簡CSS重置，確保所有元素從邊緣開始 */
+        /* 極簡重置與基礎樣式，確保滿版無邊距 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        /* 設定全域基礎字體為較大的16px (符合長輩需求) */
-        html {
-            font-size: 16px;
-            -webkit-text-size-adjust: 100%; /* 防止旋轉螢幕時字體自動變化 */
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            background-color: #f0f2f5; /* 背景色，非純白減少眩光 */
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            /* 基礎字體放大至 18px，符合長輩閱讀，所有單位用 rem 繼承 */
+            font-size: 18px;
+            /* 防止他人選取、複製內容 (基本防護) */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
-        body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background-color: #f5f5f5; /* 背景色，避免載入時空白 */
-            overflow: hidden; /* 隱藏body滾動條，讓iframe自己控制 */
-            height: 100dvh; /* 使用dvh確保動態視口高度 (處理手機網址列伸縮) */
-            width: 100vw;
+        /* 例外：允許在 iframe 內部正常操作，但禁止在外部頁面選取 */
+        iframe {
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+        }
+
+        /* 主容器：滿版 Flex 佈局 */
+        .full-screen-container {
             display: flex;
             flex-direction: column;
-        }
-
-        /* 主要內容區塊：滿版iframe */
-        .embedded-page {
-            flex: 1; /* 撐滿剩餘高度 */
             width: 100%;
-            border: none; /* 移除邊框 */
-            overflow: auto; /* 如果嵌入的內容過長，讓iframe內部可以滾動 */
-            -webkit-overflow-scrolling: touch; /* 流暢的觸控滾動 */
+            min-height: 100vh;
         }
 
-        /* 可選：防止使用者選取任何內容 (資安輔助) */
-        .no-select {
-            -webkit-user-select: none; /* Safari */
-            -moz-user-select: none; /* Firefox */
-            -ms-user-select: none; /* IE10+/Edge */
-            user-select: none; /* Standard */
-        }
-
-        /* 簡單的載入提示 (可選) */
-        .loading-placeholder {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        /* 可選的簡易標題列，讓長輩知道目前頁面 */
+        .header-bar {
+            background-color: #2c3e50;
+            color: white;
+            padding: 0.8rem 1rem;
+            text-align: center;
             font-size: 1.2rem;
-            color: #666;
-            z-index: 1;
-            pointer-events: none; /* 讓提示不阻擋點擊 */
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            /* 確保標題不會被選取複製 */
+            user-select: none;
+        }
+
+        /* iframe 區域：填滿剩餘空間 */
+        .iframe-wrapper {
+            flex: 1;
+            width: 100%;
+            background-color: #ffffff;
+            /* 在小螢幕上確保高度正確 */
+            min-height: 0; /* Flexbox 修復 */
+        }
+
+        iframe {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: none;
+            /* 允許在 iframe 內滾動，但外部不會 */
+            overflow: auto;
+            /* 背景設為透明，讓 wrapper 背景顯示 (如有需要) */
+            background-color: transparent;
+        }
+
+        /* 針對老花眼鏡，增加一些可點擊區域的提示（可選，在 footer） */
+        .footer-note {
+            background-color: #ecf0f1;
+            text-align: center;
+            padding: 0.4rem 1rem;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            border-top: 1px solid #bdc3c7;
+            user-select: none;
         }
     </style>
 </head>
-<body class="no-select" oncontextmenu="return false;" onselectstart="return false;" ondragstart="return false;">
-    <!-- 載入提示 (在iframe載入完成前顯示) -->
-    <div class="loading-placeholder" id="loading">載入中，請稍候...</div>
-
-    <!-- 嵌入目標網址的iframe -->
-    <iframe 
-        class="embedded-page" 
-        id="mainFrame"
-        src="https://script.google.com/macros/s/AKfycbwKlB8DBSp2QxK6yFfFkdJ1O09AcX5RClm_GYZBp3BTlZRRFKvoZMjQd0I7Ep-90DST/exec"
-        frameborder="0"
-        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen
-        loading="lazy"
-        onload="document.getElementById('loading').style.display='none';">
-        <!-- 當瀏覽器不支援iframe時的備用文字 -->
-        <p>您的瀏覽器不支援 iframe，請點擊此連結：<a href="https://script.google.com/macros/s/AKfycbwKlB8DBSp2QxK6yFfFkdJ1O09AcX5RClm_GYZBp3BTlZRRFKvoZMjQd0I7Ep-90DST/exec" target="_blank">開啟應用程式</a></p>
-    </iframe>
-
+<body>
+    <!-- 防止右鍵選單 (基本防護) -->
     <script>
-        // 加強防護：防止使用者透過快捷鍵(F12)或組合鍵開啟開發者工具 (僅為輔助，無法100%防止)
-        document.addEventListener('keydown', function(e) {
-            // 封鎖 F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) || 
-                (e.ctrlKey && e.key === 'U')) {
+        (function() {
+            // 禁止右鍵點擊出現選單
+            document.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 return false;
-            }
-        });
-
-        // 當iframe載入失敗時顯示提示 (例如被封鎖)
-        document.getElementById('mainFrame').onerror = function() {
-            document.getElementById('loading').innerHTML = '載入失敗，請確認網路連線或連結是否有效。';
-        };
+            });
+            // 禁止常見的複製快捷鍵 (僅作基本防護，無法防所有手段)
+            document.addEventListener('keydown', function(e) {
+                if ( (e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U') ) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            // 提醒使用者操作方式 (非必要，可選)
+            console.log('頁面已載入，為最佳瀏覽體驗，請點擊內容開始操作。');
+        })();
     </script>
+
+    <div class="full-screen-container">
+        <!-- 簡單標題列，清楚識別 -->
+        <div class="header-bar">
+            📋 客戶服務入口
+        </div>
+
+        <!-- 嵌入您的第一個 Google Apps Script 網頁 (無參數) -->
+        <div class="iframe-wrapper">
+            <iframe 
+                src="https://script.google.com/macros/s/AKfycbwUXF4XxR4ZZenwgx2zK1z504qMIuSc7MJRdQU9bY_0YILmt7_taOQs0D0I_mfHWFzR/exec"
+                title="Google Apps 應用程式"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
+                referrerpolicy="no-referrer-when-downgrade"
+                loading="lazy">
+                <!-- 若瀏覽器不支援 iframe 的備用訊息，字體稍大 -->
+                <p style="font-size: 1.2rem; padding: 2rem; text-align: center;">您的瀏覽器不支援 iframe，請嘗試更換裝置或更新瀏覽器。</p>
+            </iframe>
+        </div>
+
+        <!-- 簡易頁腳提示，輔助長輩操作 -->
+        <div class="footer-note">
+            👆 點擊上方區域開始填寫 / 查詢
+        </div>
+    </div>
 </body>
 </html>
